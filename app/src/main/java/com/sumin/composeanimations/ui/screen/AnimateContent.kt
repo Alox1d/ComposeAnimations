@@ -1,5 +1,7 @@
 package com.sumin.composeanimations.ui.screen
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
@@ -9,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AnimateContent() {
 
@@ -27,10 +30,22 @@ fun AnimateContent() {
         ) {
             Text(text = "Switch screens")
         }
-        if (isFirstScreenLaunched) {
-            Screen1()
-        } else {
-            Screen2()
+
+        AnimatedContent(
+            targetState = isFirstScreenLaunched,
+            transitionSpec = {
+                if (targetState) {
+                    slideInHorizontally(tween(2000)) { -it } with slideOutHorizontally(tween(2000)) { it }
+                } else {
+                    slideInHorizontally(tween(2000)) { it } with slideOutHorizontally(tween(2000)) { -it }
+                }
+            }
+        ) { shouldLaunchFirstScreen ->
+            if (shouldLaunchFirstScreen) {
+                Screen1()
+            } else {
+                Screen2()
+            }
         }
     }
 }

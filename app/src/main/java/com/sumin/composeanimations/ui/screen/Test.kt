@@ -1,9 +1,15 @@
 package com.sumin.composeanimations.ui.screen
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -21,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -42,7 +49,33 @@ fun Test() {
 
         // вернёт State<Dp>, а не Dp, потому что значение меняется динамически, а не сразу получим какое-то одно
         // поэтому нужно использовать size.value (или вместо "=" использовать делегат by)
-        val size by animateDpAsState(targetValue = if (isIncreased) 200.dp else 100.dp)
+        val size by animateDpAsState(
+            targetValue = if (isIncreased) 200.dp else 100.dp,
+            /*
+            вариации:
+            tween - ниже
+            spring - пружина, анимация "пружинит", как желе. Может приводить к крашу, если, например, юзать такую анимацию для вычисления радиуса
+            infiniteRepeateable - для бесконечных анимаций (требует аним. сонованную на длительности: tween, но не spring). Но лучше юзать rememberInfiniteTransition
+             */
+            animationSpec = tween( // плавная анимация от 1 состояния к другому
+                durationMillis = 3000,
+                delayMillis = 500,
+            )
+        )
+
+        val infiniteTransition = rememberInfiniteTransition()
+
+        val rotation by infiniteTransition.animateFloat(
+            initialValue = 0F,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = 2000,
+                    easing = LinearEasing
+                ),
+                repeatMode = RepeatMode.Restart,
+            )
+        )
 
         Button(
             modifier = Modifier.fillMaxWidth(),
@@ -76,7 +109,8 @@ fun Test() {
         }
         AnimatedContainer(
             text = "Shape",
-            radiusPercent = radius
+            radiusPercent = radius,
+            rotation = rotation,
         )
 
         var isSelected by remember {
@@ -124,7 +158,6 @@ fun Test() {
         }
         val alpha by animateFloatAsState(targetValue = if (isVisible) 1F else 0F)
 
-
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
@@ -150,9 +183,11 @@ private fun AnimatedContainer(
     borderWidth: Dp = 0.dp,
     backgroundColor: Color = Color.Blue,
     alpha: Float = 1F,
+    rotation: Float = 0F,
 ) {
     Box(
         modifier = Modifier
+            .rotate(rotation)
             .alpha(alpha)
             .clip(RoundedCornerShape(radiusPercent))
             .border(width = borderWidth, color = Color.Black)
